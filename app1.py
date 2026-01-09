@@ -43,63 +43,62 @@ def solve_equation():
                 "solution": f"{solution} = C"
             })
 
-        # ❌ NON-EXACT CASE
-        steps.append("Equation is NON-EXACT.")
+else:
+    steps.append("Equation is NON-EXACT.")
 
-        IF = None
+    IF = None
 
-        # Rule 1: IF as function of x only
-        fx = sp.simplify((dM_dy - dN_dx) / N)
-        if fx.has(x) and not fx.has(y):
-            IF = sp.exp(sp.integrate(fx, x))
-            steps.append("Using Rule 1: IF is function of x")
-            steps.append(f"IF = {IF}")
+    # Rule 1: IF = f(x)
+    fx = sp.simplify((dM_dy - dN_dx) / N)
+    if fx.has(x) and not fx.has(y):
+        IF = sp.exp(sp.integrate(fx, x))
+        steps.append("Using Rule 1: IF is function of x")
+        steps.append(f"Integrating Factor = {IF}")
 
-        # Rule 2: IF as function of y only
-        fy = sp.simplify((dN_dx - dM_dy) / M)
-        if IF is None and fy.has(y) and not fy.has(x):
-            IF = sp.exp(sp.integrate(fy, y))
-            steps.append("Using Rule 2: IF is function of y")
-            steps.append(f"IF = {IF}")
+    # Rule 2: IF = f(y)
+    fy = sp.simplify((dN_dx - dM_dy) / M)
+    if IF is None and fy.has(y) and not fy.has(x):
+        IF = sp.exp(sp.integrate(fy, y))
+        steps.append("Using Rule 2: IF is function of y")
+        steps.append(f"Integrating Factor = {IF}")
 
-        # Rule 3: Homogeneous equation
-        if IF is None:
-            H = sp.simplify(x*M + y*N)
-            if H != 0:
-                IF = 1 / H
-                steps.append("Using Rule 3: Homogeneous equation")
-                steps.append("IF = 1 / (xM + yN)")
+    # Rule 3: Homogeneous
+    if IF is None:
+        H = sp.simplify(x*M + y*N)
+        if H != 0:
+            IF = 1 / H
+            steps.append("Using Rule 3: Homogeneous equation")
+            steps.append("IF = 1 / (xM + yN)")
 
-        # Rule 4: yf1 dx + xf2 dy
-        if IF is None:
-            H2 = sp.simplify(x*M - y*N)
-            if H2 != 0:
-                IF = 1 / H2
-                steps.append("Using Rule 4: y f1 dx + x f2 dy")
-                steps.append("IF = 1 / (xM - yN)")
+    # Rule 4: y f1 dx + x f2 dy
+    if IF is None:
+        H2 = sp.simplify(x*M - y*N)
+        if H2 != 0:
+            IF = 1 / H2
+            steps.append("Using Rule 4: y f1 dx + x f2 dy")
+            steps.append("IF = 1 / (xM - yN)")
 
-        if IF is None:
-            steps.append("Integrating factor not found.")
-            return jsonify({"steps": steps, "solution": "Not solvable"})
-
-        # Make exact
-        M_new = sp.simplify(M * IF)
-        N_new = sp.simplify(N * IF)
-
-        steps.append(f"New M = {M_new}")
-        steps.append(f"New N = {N_new}")
-        steps.append("Equation is now EXACT.")
-
-        phi = sp.integrate(M_new, x)
-        g_y = sp.integrate(N_new - sp.diff(phi, y), y)
-        solution = phi + g_y
-
-        steps.append(f"General solution: {solution} = C")
-
+    if IF is None:
         return jsonify({
             "steps": steps,
-            "solution": f"{solution} = C"
+            "solution": "Integrating factor not found"
         })
+
+    # Make equation exact
+    M1 = sp.simplify(M * IF)
+    N1 = sp.simplify(N * IF)
+
+    phi = sp.integrate(M1, x)
+    g_y = sp.integrate(N1 - sp.diff(phi, y), y)
+    solution = phi + g_y
+
+    steps.append(f"After IF, equation becomes exact")
+    steps.append(f"General Solution: {solution} = C")
+
+    return jsonify({
+        "steps": steps,
+        "solution": f"{solution} = C"
+    })
 
     except Exception as e:
         return jsonify({
@@ -108,5 +107,6 @@ def solve_equation():
         })
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+
 
 
